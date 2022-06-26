@@ -10,15 +10,7 @@ CREATE UNLOGGED TABLE IF NOT EXISTS "user" (
 );
 
 CREATE INDEX IF NOT EXISTS index_user_nickname_hash ON "user" USING HASH ("nickname");
-
--- Change
 CREATE INDEX IF NOT EXISTS index_user_email_hash ON "user" (nickname, email);
-
-
-
-
-
-
 
 
 ----------------------------------------------------------------- FORUM
@@ -32,13 +24,18 @@ CREATE UNLOGGED TABLE IF NOT EXISTS "forum" (
 );
 
 CREATE INDEX IF NOT EXISTS index_forum_slug_hash ON "forum" USING HASH ("slug");
---CREATE INDEX IF NOT EXISTS index_forum_id_hash ON "forum" USING HASH ("id");
 
+----------------------------------------------------------------- FORUM-USER
+CREATE UNLOGGED TABLE IF NOT EXISTS "forum_user" (
+     nickname citext NOT NULL REFERENCES "user" (nickname),
+     forum citext NOT NULL REFERENCES "forum" (slug),
+     fullname text NOT NULL,
+     about text NOT NULL,
+     email citext NOT NULL,
+     PRIMARY KEY (forum, nickname)
+);
 
-
-
-
-
+CREATE UNIQUE INDEX IF NOT EXISTS index_fast ON "forum_user"(forum, nickname);
 
 ----------------------------------------------------------------- THREAD
 CREATE UNLOGGED TABLE IF NOT EXISTS "thread" (
@@ -52,25 +49,16 @@ CREATE UNLOGGED TABLE IF NOT EXISTS "thread" (
     created timestamptz NOT NULL
 );
 
--- change
 CREATE INDEX IF NOT EXISTS index_thread_slug_hash ON "thread" USING HASH ("slug");
-
 CREATE INDEX IF NOT EXISTS index_thread_id_hash ON "thread" USING HASH ("forum");
 CREATE INDEX IF NOT EXISTS index_thread_forum_created ON "thread" ("forum", "created");
-
-
-
-
-
-
-
 
 
 ----------------------------------------------------------------- POST
 CREATE UNLOGGED TABLE IF NOT EXISTS "post" (
     id   serial PRIMARY KEY,
     parent   int DEFAULT 0,
-    path     int [] DEFAULT ARRAY [] :: INTEGER [],
+    path     int [] NOT NULL,
     author   text NOT NULL,
     forum    text  NOT NULL,
     thread   int  NOT NULL,
@@ -80,15 +68,15 @@ CREATE UNLOGGED TABLE IF NOT EXISTS "post" (
 );
 
 
---CREATE INDEX IF NOT EXISTS index_post_id ON "post" USING HASH ("id");
 CREATE INDEX IF NOT EXISTS index_post_thread_id ON "post"("thread", "path");
--- new
-CREATE INDEX IF NOT EXISTS post_path_complex ON "post" ((path[1]), path);
+CREATE INDEX IF NOT EXISTS index_post_path_complex ON "post" ((path[1]), path);
 
 
-CREATE OR REPLACE FUNCTION increment_forum_thread() RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION increment_thread() RETURNS TRIGGER AS $$
 BEGIN
-    UPDATE "forum" SET threads = threads + 1 where slug=NEW.forum;
+    UPDATE "forum"
+    SET threads = threads + 1
+    WHERE slug=NEW.forum;
     RETURN NEW;
 END;
 $$ LANGUAGE  plpgsql;
@@ -97,12 +85,14 @@ CREATE TRIGGER insert_thread
     AFTER INSERT
     ON thread
     FOR EACH ROW
-EXECUTE PROCEDURE increment_forum_thread();
+EXECUTE PROCEDURE increment_thread();
 
 
-CREATE OR REPLACE FUNCTION update_path() RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION new_path() RETURNS TRIGGER AS $$
 BEGIN
-    new.path = (SELECT path FROM "post" WHERE id = new.parent) || new.id;
+    new.path = (SELECT path
+                FROM "post"
+                WHERE id = new.parent) || new.id;
     RETURN new;
 END;
 $$ LANGUAGE plpgsql;
@@ -110,12 +100,14 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER update_path
     BEFORE INSERT ON "post"
     FOR EACH ROW
-    EXECUTE PROCEDURE update_path();
+    EXECUTE PROCEDURE new_path();
 
 
 CREATE OR REPLACE FUNCTION increment_forum_posts() RETURNS TRIGGER AS $$
 BEGIN
-    UPDATE "forum" SET posts = "forum".posts + 1 WHERE slug = NEW.forum;
+    UPDATE "forum"
+    SET posts = "forum".posts + 1
+    WHERE slug = NEW.forum;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -137,10 +129,11 @@ CREATE INDEX IF NOT EXISTS index_vote_exist ON "vote" ("thread", "nickname");
 CREATE INDEX IF NOT EXISTS index_vote_update ON "vote" ("nickname", "thread", "voice");
 
 
-
-CREATE OR REPLACE FUNCTION set_threads_votes() RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION make_votes() RETURNS TRIGGER AS $$
 BEGIN
-    UPDATE "thread" SET votes = votes + NEW.voice WHERE id = NEW.thread;
+    UPDATE "thread"
+    SET votes = votes + NEW.voice
+    WHERE id = NEW.thread;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -149,13 +142,14 @@ CREATE TRIGGER insert_votes
     AFTER INSERT
     ON "vote"
     FOR EACH ROW
-EXECUTE PROCEDURE set_threads_votes();
+EXECUTE PROCEDURE make_votes();
 
 
-
-CREATE OR REPLACE FUNCTION update_threads_votes() RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION update_votes() RETURNS TRIGGER AS $$
 BEGIN
-    UPDATE "thread" SET votes = votes + NEW.voice - OLD.voice WHERE id = NEW.thread;
+    UPDATE "thread"
+    SET votes = votes + NEW.voice - OLD.voice
+    WHERE id = NEW.thread;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -164,23 +158,10 @@ CREATE TRIGGER update_votes
     AFTER UPDATE
     ON "vote"
     FOR EACH ROW
-EXECUTE PROCEDURE update_threads_votes();
+EXECUTE PROCEDURE update_votes();
 
 
------------------------------------------------------------------ FORUM-USER
-CREATE UNLOGGED TABLE IF NOT EXISTS "forum_user" (
-    nickname citext COLLATE "ucs_basic" NOT NULL,
-    forum citext NOT NULL,
-    fullname text NOT NULL,
-    about text NOT NULL,
-    email citext NOT NULL,
-    CONSTRAINT forum_user_key UNIQUE (nickname, forum)
-);
-
-CREATE UNIQUE INDEX IF NOT EXISTS index_fast ON "forum_user"(forum, nickname);
-
-
-CREATE OR REPLACE FUNCTION update_forum_user() RETURNS TRIGGER AS
+CREATE OR REPLACE FUNCTION add_user() RETURNS TRIGGER AS
 $$
 DECLARE
     nickname citext;
@@ -188,11 +169,14 @@ DECLARE
     about    text;
     email    citext;
 BEGIN
-    SELECT u.nickname, u.fullname, u.about, u.email FROM "user" u WHERE u.nickname = NEW.author
+    SELECT u.nickname, u.fullname, u.about, u.email
+    FROM "user" u
+    WHERE u.nickname = NEW.author
     INTO nickname, fullname, about, email;
 
     INSERT INTO "forum_user" (nickname, fullname, about, email, forum)
-    VALUES (nickname, fullname, about, email, NEW.forum) ON CONFLICT do nothing;
+    VALUES (nickname, fullname, about, email, NEW.forum)
+     ON CONFLICT do nothing;
 
     RETURN NEW;
 END;
@@ -203,11 +187,12 @@ CREATE TRIGGER update_forum_user_on_post
     AFTER INSERT
     ON "post"
     FOR EACH ROW
-EXECUTE PROCEDURE update_forum_user();
+EXECUTE PROCEDURE add_user();
 
 CREATE TRIGGER update_forum_user_on_thread
     AFTER INSERT
     ON "thread"
     FOR EACH ROW
-EXECUTE PROCEDURE update_forum_user();
+EXECUTE PROCEDURE add_user();
 
+VACUUM ANALYZE;
