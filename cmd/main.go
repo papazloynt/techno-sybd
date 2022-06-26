@@ -35,25 +35,25 @@ func main() {
 
 	log := logrus.New()
 
-	formatter := logrus.JSONFormatter{
-		TimestampFormat: time.RFC3339,
-	}
+	//formatter := logrus.JSONFormatter{
+	//	TimestampFormat: time.RFC3339,
+	//}
 
 	switch viper.GetString("logging.level") {
 	case "warning":
 		log.SetLevel(logrus.WarnLevel)
 	case "notice":
 		log.SetLevel(logrus.InfoLevel)
-	case "debug":
-		log.SetLevel(logrus.DebugLevel)
-		formatter.PrettyPrint = true
+	//case "debug":
+	//	log.SetLevel(logrus.DebugLevel)
+	//	formatter.PrettyPrint = true
 	default:
 		log.SetLevel(logrus.InfoLevel)
 	}
 
-	log.SetFormatter(&formatter)
+	//	log.SetFormatter(&formatter)
 
-	log.Infof("log level: %s", log.Level.String())
+	//log.Infof("log level: %s", log.Level.String())
 
 	// -------------------- Set up database -------------------- //
 

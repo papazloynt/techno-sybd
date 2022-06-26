@@ -29,7 +29,7 @@ func (svc *threadServiceImpl) CreateThread(ctx context.Context, request *dto.Cre
 	user, err := svc.db.UserRepo.GetUserByNickname(ctx, request.Author)
 	if err != nil {
 		if errors.Is(err, constants.ErrDBNotFound) {
-			svc.log.Errorf("err: %s", err)
+			//svc.log.Errorf("err: %s", err)
 			return &dto.CreateThreadResponse{Value: dto.ErrorResponse{Message: fmt.Sprintf("Can't find user by nickname: %s", request.Author)}, Code: http.StatusNotFound}, nil
 		}
 	}
@@ -37,7 +37,7 @@ func (svc *threadServiceImpl) CreateThread(ctx context.Context, request *dto.Cre
 
 	if forum, err := svc.db.ForumRepo.GetForumBySlug(ctx, request.Forum); err != nil {
 		if errors.Is(err, constants.ErrDBNotFound) {
-			svc.log.Errorf("err: %s", err)
+			//svc.log.Errorf("err: %s", err)
 			return &dto.CreateThreadResponse{Value: dto.ErrorResponse{Message: fmt.Sprintf("Can't find thread forum by slug: %s", request.Forum)}, Code: http.StatusNotFound}, nil
 		}
 	} else {
@@ -47,11 +47,11 @@ func (svc *threadServiceImpl) CreateThread(ctx context.Context, request *dto.Cre
 	if request.Slug != "" {
 		if thread, err := svc.db.ThreadRepo.GetThread(ctx, request.Slug); err != nil {
 			if !errors.Is(err, constants.ErrDBNotFound) {
-				svc.log.Errorf("err: %s", err)
+				//svc.log.Errorf("err: %s", err)
 				return nil, err
 			}
 		} else {
-			svc.log.Errorf("err: %s", err)
+			//svc.log.Errorf("err: %s", err)
 			return &dto.CreateThreadResponse{Value: thread, Code: http.StatusConflict}, nil
 		}
 	}

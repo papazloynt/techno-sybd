@@ -34,13 +34,13 @@ func (svc *userServiceImpl) CreateUser(ctx context.Context, request *dto.CreateU
 	if err := svc.db.UserRepo.CreateUser(ctx, user); err != nil {
 		return nil, err
 	}
-	svc.log.Infof("user:  %s ", user)
+	//svc.log.Infof("user:  %s ", user)
 	return &dto.CreateUserResponse{Value: user, Code: http.StatusCreated}, nil
 }
 
 func (svc *userServiceImpl) GetProfile(ctx context.Context, request *dto.GetProfileRequest) (*dto.GetProfileResponse, error) {
 	user, err := svc.db.UserRepo.GetUserByNickname(ctx, request.Nickname)
-	svc.log.Infof("user:  %s \n err: %s", user, err)
+	//svc.log.Infof("user:  %s \n err: %s", user, err)
 	if err != nil {
 		if errors.Is(err, constants.ErrDBNotFound) {
 			return &dto.GetProfileResponse{Value: constants.CreateNewError(fmt.Sprintf("Can't find user with that nickname: %s", request.Nickname), http.StatusNotFound), Code: http.StatusNotFound}, nil

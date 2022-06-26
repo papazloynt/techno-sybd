@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
 	"github.com/sirupsen/logrus"
 	"strconv"
 )
@@ -22,7 +21,7 @@ func (c *PostController) CreatePost(ctx echo.Context) error {
 	buf := new(bytes.Buffer)
 	_, err := buf.ReadFrom(ctx.Request().Body)
 	if err != nil {
-		log.Errorf("Unmarshal error: %s", err)
+		//log.Errorf("Unmarshal error: %s", err)
 		return err
 	}
 	err = json.Unmarshal(buf.Bytes(), &request)
@@ -74,7 +73,7 @@ func (c *PostController) GetPost(ctx echo.Context) error {
 func (c *PostController) GetPostDetails(ctx echo.Context) error {
 	request := &dto.GetPostDetailsRequest{}
 	if err := ctx.Bind(request); err != nil {
-		c.log.Errorf("Bind error: %s", err)
+		//c.log.Errorf("Bind error: %s", err)
 		return err
 	}
 	id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)

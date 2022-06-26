@@ -18,7 +18,7 @@ type APIService struct {
 }
 
 func (svc *APIService) Serve() {
-	svc.log.Info("Starting HTTP server")
+	//svc.log.Info("Starting HTTP server")
 	listenAddr := viper.GetString("service.bind.address") + ":" + viper.GetString("service.bind.port")
 	svc.log.Fatal(svc.router.Start(listenAddr))
 }
@@ -36,8 +36,8 @@ func NewAPIService(log *logrus.Entry, db_ *pgxpool.Pool) (*APIService, error) {
 		router: echo.New(),
 	}
 
-	svc.router.Validator = NewValidator()
-	svc.router.Binder = NewBinder()
+	//svc.router.Validator = NewValidator()
+	//svc.router.Binder = NewBinder()
 
 	repository, err := db.NewRepository(db_)
 	if err != nil {

@@ -4,11 +4,9 @@ import (
 	"SYBD/internal/constants"
 	"bytes"
 	"fmt"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
-
 	"github.com/bytedance/sonic"
 	"github.com/go-playground/validator/v10"
+	"github.com/labstack/echo/v4"
 )
 
 type validatorImpl struct {
@@ -34,12 +32,12 @@ func (b *binderImpl) Bind(i interface{}, ctx echo.Context) error {
 	buf := new(bytes.Buffer)
 	_, err := buf.ReadFrom(ctx.Request().Body)
 	if err != nil {
-		log.Errorf("Unmarshal error: %s", err)
+		//log.Errorf("Unmarshal error: %s", err)
 		return err
 	}
 	err = sonic.Unmarshal(buf.Bytes(), i)
 	if err != nil {
-		log.Errorf("Unmarshal error: %s", err)
+		//log.Errorf("Unmarshal error: %s", err)
 	}
 	if err := db.BindQueryParams(ctx, i); err != nil {
 		return fmt.Errorf("%w: %v", constants.ErrBindRequest, err)

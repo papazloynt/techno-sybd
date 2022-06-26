@@ -25,7 +25,7 @@ func (c *ThreadController) CreateThread(ctx echo.Context) error {
 		return err
 	}
 
-	c.log.Infof("response: %s", response)
+	//c.log.Infof("response: %s", response)
 	return ctx.JSON(response.Code, response.Value)
 }
 

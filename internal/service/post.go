@@ -113,20 +113,20 @@ func (svc *postServiceImpl) GetPost(ctx context.Context, slugOrID string, sort s
 }
 
 func (svc *postServiceImpl) GetPostDetails(ctx context.Context, request *dto.GetPostDetailsRequest) (*dto.GetPostDetailsResponse, error) {
-	svc.log.Infof("request: %v", request)
+	//svc.log.Infof("request: %v", request)
 	post, err := svc.db.PostRepo.GetPostByID(ctx, request.ID)
-	svc.log.Infof("post: %v \n err: %s", post, err)
+	//svc.log.Infof("post: %v \n err: %s", post, err)
 	if err != nil {
 		if errors.Is(err, constants.ErrDBNotFound) {
 			return &dto.GetPostDetailsResponse{Value: dto.ErrorResponse{Message: fmt.Sprintf("Can't find post by id: %d", request.ID)}, Code: http.StatusNotFound}, nil
 		}
-		svc.log.Errorf("post: %v \n err: %s", post, err)
+		//svc.log.Errorf("post: %v \n err: %s", post, err)
 		return nil, err
 	}
 
 	postDetails, err := svc.db.PostRepo.GetPostDetails(ctx, request.ID, request.Related)
 	if err != nil {
-		svc.log.Errorf("post: %v \n err: %s", post, err)
+		//svc.log.Errorf("post: %v \n err: %s", post, err)
 		return nil, err
 	}
 	postDetails.Post = post

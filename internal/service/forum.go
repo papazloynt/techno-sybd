@@ -57,12 +57,12 @@ func (svc *forumServiceImpl) GetForum(ctx context.Context, request *dto.GetForum
 	forum, err := svc.db.ForumRepo.GetForumBySlug(ctx, request.Slug)
 	if err != nil {
 		if errors.Is(err, constants.ErrDBNotFound) {
-			svc.log.Errorf("err: %s", err)
+			//svc.log.Errorf("err: %s", err)
 			return &dto.GetForumResponse{Value: dto.ErrorResponse{Message: fmt.Sprintf("Can't find forum with slug: %s", request.Slug)}, Code: http.StatusNotFound}, nil
 		}
 		return nil, err
 	}
-	svc.log.Infof("Success")
+	//svc.log.Infof("Success")
 	return &dto.GetForumResponse{Value: forum, Code: http.StatusOK}, nil
 }
 

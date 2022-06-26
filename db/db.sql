@@ -35,7 +35,7 @@ CREATE UNLOGGED TABLE IF NOT EXISTS "forum_user" (
      PRIMARY KEY (forum, nickname)
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS index_fast ON "forum_user"(forum, nickname);
+-- CREATE UNIQUE INDEX IF NOT EXISTS index_fast ON "forum_user"(forum, nickname);
 
 ----------------------------------------------------------------- THREAD
 CREATE UNLOGGED TABLE IF NOT EXISTS "thread" (
@@ -125,7 +125,7 @@ CREATE UNLOGGED TABLE IF NOT EXISTS "vote" (
   voice int NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS index_vote_exist ON "vote" ("thread", "nickname");
+-- CREATE INDEX IF NOT EXISTS index_vote_exist ON "vote" ("thread", "nickname");
 CREATE INDEX IF NOT EXISTS index_vote_update ON "vote" ("nickname", "thread", "voice");
 
 

@@ -46,7 +46,7 @@ func (c *ForumController) GetForumThreads(ctx echo.Context) error {
 	request := new(dto.GetForumThreadRequest)
 
 	if err := ctx.Bind(request); err != nil {
-		c.log.Errorf("Bind error: %s", err)
+		//c.log.Errorf("Bind error: %s", err)
 		return err
 	}
 	request.Slug = ctx.Param("slug")
@@ -65,7 +65,7 @@ func (c *ForumController) GetUsers(ctx echo.Context) error {
 	request := new(dto.GetForumUsersRequest)
 
 	if err := ctx.Bind(request); err != nil {
-		c.log.Errorf("Bind error: %s", err)
+		//c.log.Errorf("Bind error: %s", err)
 		return err
 	}
 	request.Slug = ctx.Param("slug")

@@ -19,7 +19,7 @@ func (c *UserController) CreateUser(ctx echo.Context) error {
 		return err
 	}
 	request.Nickname = ctx.Param("nickname")
-	c.log.Infof("request nick: %s", request.Nickname)
+	//c.log.Infof("request nick: %s", request.Nickname)
 	response, err := c.registry.UserService.CreateUser(context.Background(), request)
 	if err != nil {
 		return err
@@ -34,14 +34,14 @@ func (c *UserController) GetProfile(ctx echo.Context) error {
 		return err
 	}
 	request.Nickname = ctx.Param("nickname")
-	c.log.Infof("request nick: %s", request.Nickname)
+	//c.log.Infof("request nick: %s", request.Nickname)
 
 	response, err := c.registry.UserService.GetProfile(context.Background(), request)
 	if err != nil {
-		c.log.Infof("err: %s", err)
+		//c.log.Infof("err: %s", err)
 		return err
 	}
-	c.log.Infof("response: %s", response)
+	//c.log.Infof("response: %s", response)
 
 	return ctx.JSON(response.Code, response.Value)
 }
@@ -52,12 +52,12 @@ func (c *UserController) UpdateProfile(ctx echo.Context) error {
 		return err
 	}
 	request.Nickname = ctx.Param("nickname")
-	c.log.Infof("request nick: %s", request.Nickname)
+	//c.log.Infof("request nick: %s", request.Nickname)
 	response, err := c.registry.UserService.UpdateProfile(context.Background(), request)
 	if err != nil {
 		return err
 	}
-	c.log.Infof("response : %s", response.Value)
+	//c.log.Infof("response : %s", response.Value)
 	return ctx.JSON(response.Code, response.Value)
 }
 
