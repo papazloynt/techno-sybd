@@ -28,14 +28,31 @@ CREATE INDEX IF NOT EXISTS index_forum_slug_hash ON "forum" USING HASH ("slug");
 ----------------------------------------------------------------- FORUM-USER
 CREATE UNLOGGED TABLE IF NOT EXISTS "forum_user" (
      nickname citext NOT NULL REFERENCES "user" (nickname),
-     forum citext NOT NULL REFERENCES "forum" (slug),
-     fullname text NOT NULL,
-     about text NOT NULL,
-     email citext NOT NULL,
+     forum  citext NOT NULL REFERENCES "forum" (slug),
      PRIMARY KEY (forum, nickname)
 );
 
--- CREATE UNIQUE INDEX IF NOT EXISTS index_fast ON "forum_user"(forum, nickname);
+CREATE FUNCTION add_forum_user() RETURNS TRIGGER AS
+$$
+BEGIN
+    INSERT INTO forum_user (forum, nickname)
+     VALUES (NEW.forum, NEW.author)
+     ON conflict do nothing;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER forum_user
+    AFTER INSERT
+    ON post
+    FOR EACH ROW
+EXECUTE PROCEDURE add_forum_user();
+
+CREATE TRIGGER forum_user
+    AFTER INSERT
+    ON thread
+    FOR EACH ROW
+EXECUTE PROCEDURE add_forum_user();
 
 ----------------------------------------------------------------- THREAD
 CREATE UNLOGGED TABLE IF NOT EXISTS "thread" (
@@ -72,7 +89,8 @@ CREATE INDEX IF NOT EXISTS index_post_thread_id ON "post"("thread", "path");
 CREATE INDEX IF NOT EXISTS index_post_path_complex ON "post" ((path[1]), path);
 
 
-CREATE OR REPLACE FUNCTION increment_thread() RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION increment_thread() RETURNS TRIGGER AS
+$$
 BEGIN
     UPDATE "forum"
     SET threads = threads + 1
@@ -125,7 +143,6 @@ CREATE UNLOGGED TABLE IF NOT EXISTS "vote" (
   voice int NOT NULL
 );
 
--- CREATE INDEX IF NOT EXISTS index_vote_exist ON "vote" ("thread", "nickname");
 CREATE INDEX IF NOT EXISTS index_vote_update ON "vote" ("nickname", "thread", "voice");
 
 
@@ -159,40 +176,5 @@ CREATE TRIGGER update_votes
     ON "vote"
     FOR EACH ROW
 EXECUTE PROCEDURE update_votes();
-
-
-CREATE OR REPLACE FUNCTION add_user() RETURNS TRIGGER AS
-$$
-DECLARE
-    nickname citext;
-    fullname text;
-    about    text;
-    email    citext;
-BEGIN
-    SELECT u.nickname, u.fullname, u.about, u.email
-    FROM "user" u
-    WHERE u.nickname = NEW.author
-    INTO nickname, fullname, about, email;
-
-    INSERT INTO "forum_user" (nickname, fullname, about, email, forum)
-    VALUES (nickname, fullname, about, email, NEW.forum)
-     ON CONFLICT do nothing;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-
-CREATE TRIGGER update_forum_user_on_post
-    AFTER INSERT
-    ON "post"
-    FOR EACH ROW
-EXECUTE PROCEDURE add_user();
-
-CREATE TRIGGER update_forum_user_on_thread
-    AFTER INSERT
-    ON "thread"
-    FOR EACH ROW
-EXECUTE PROCEDURE add_user();
 
 VACUUM ANALYZE;
